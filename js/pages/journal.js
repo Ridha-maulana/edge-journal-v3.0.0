@@ -1,6 +1,8 @@
 /* Halaman My Journal dan kartu trade */
 "use strict";
-function Journal({ account, trades, filters, setFilters, expanded, setExpanded, onAdd, onDelete, onClose, onEdit }) {
+function Journal({ account, trades, filters, setFilters, expanded, setExpanded, onAdd, onScan, onDelete, onClose, onEdit }) {
+    const [addMenu, setAddMenu] = useState(false);
+    const fileRef = useRef(null);
     const [openWeeks, setOpenWeeks] = useState({});
     const filtered = trades.filter(t => (filters.status === 'all' || t.status === filters.status) && (filters.side === 'all' || t.side === filters.side) && (!filters.search || t.symbol.toLowerCase().includes(filters.search.toLowerCase()) || String(t.setup || '').toLowerCase().includes(filters.search.toLowerCase())) && (!filters.date || dateOnly(t.date) === filters.date));
     const groups = filtered.reduce((acc, t) => { const key = dateOnly(t.date); (acc[key] || (acc[key] = [])).push(t); return acc; }, {});
@@ -58,7 +60,9 @@ function Journal({ account, trades, filters, setFilters, expanded, setExpanded, 
             React.createElement(BookOpen, { size: 26 }),
             React.createElement("strong", null, "Tidak ada trade yang cocok"),
             React.createElement("span", null, "Ubah filter atau tambah transaksi baru.")),
-        React.createElement("button", { className: "fab", onClick: onAdd },
+        addMenu && React.createElement(AddMenu, { onClose: () => setAddMenu(false), onManual: () => { setAddMenu(false); onAdd(); }, onScreenshot: () => { setAddMenu(false); if (fileRef.current) { fileRef.current.value = ''; fileRef.current.click(); } } }),
+        React.createElement("input", { ref: fileRef, type: "file", accept: "image/*", style: { display: 'none' }, onChange: e => { const f = e.target.files && e.target.files[0]; if (f && onScan) onScan(f); } }),
+        React.createElement("button", { className: addMenu ? "fab open" : "fab", "aria-label": "Tambah trade", "aria-expanded": addMenu, onClick: () => setAddMenu(!addMenu) },
             React.createElement(Plus, { size: 25 })));
 }
 function TradeCard({ trade, expanded, onToggle, onDelete, onClose, onEdit }) { var _a, _b, _c, _d; return React.createElement("div", { className: "trade-card", onClick: onToggle },

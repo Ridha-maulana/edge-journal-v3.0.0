@@ -1,8 +1,10 @@
 /* Popup tambah/edit trade, tutup posisi, hitung risiko */
 "use strict";
-function AddTradeForm({ account, onClose, onSave, initial }) {
+function AddTradeForm({ account, onClose, onSave, initial, prefill }) {
     var _a, _b, _c;
-    const [form, setForm] = useState(initial ? { ...initial, entry: String((_a = initial.entry) !== null && _a !== void 0 ? _a : ''), exit: initial.exit == null ? '' : String(initial.exit), lots: String((_b = initial.lots) !== null && _b !== void 0 ? _b : ''), sl: initial.sl == null ? '' : String(initial.sl), tp: initial.tp == null ? '' : String(initial.tp), fees: String((_c = initial.fees) !== null && _c !== void 0 ? _c : 0), setup: initial.setup || '', screenshots: initial.screenshots || [] } : { symbol: 'XAUUSD', side: 'Long', date: isoNow(), entry: '', exit: '', lots: '0.01', sl: '', tp: '', fees: '0', setup: '', screenshots: [] });
+    const pf = prefill || null;
+    const [tzMode, setTzMode] = useState(mt5GetTz());
+    const [form, setForm] = useState(pf ? { symbol: pf.symbol, side: pf.side, date: pf.date, closeDate: pf.closeDate, entry: String(pf.entry), exit: pf.exit == null ? '' : String(pf.exit), lots: String(pf.lots), sl: pf.sl == null ? '' : String(pf.sl), tp: pf.tp == null ? '' : String(pf.tp), fees: String(pf.fees || 0), exitMethod: pf.exitMethod, setup: '', screenshots: [] } : initial ? { ...initial, entry: String((_a = initial.entry) !== null && _a !== void 0 ? _a : ''), exit: initial.exit == null ? '' : String(initial.exit), lots: String((_b = initial.lots) !== null && _b !== void 0 ? _b : ''), sl: initial.sl == null ? '' : String(initial.sl), tp: initial.tp == null ? '' : String(initial.tp), fees: String((_c = initial.fees) !== null && _c !== void 0 ? _c : 0), setup: initial.setup || '', screenshots: initial.screenshots || [] } : { symbol: 'XAUUSD', side: 'Long', date: isoNow(), entry: '', exit: '', lots: '0.01', sl: '', tp: '', fees: '0', setup: '', screenshots: [] });
     const [showAdjust, setShowAdjust] = useState(false);
     const [calculated, setCalculated] = useState(false);
     const risk = riskFor(form.entry, form.sl, form.lots, form.symbol);
@@ -16,8 +18,26 @@ function AddTradeForm({ account, onClose, onSave, initial }) {
         set('screenshots', [...form.screenshots, ...urls.filter(Boolean)].slice(0, 3));
     } }
     async function handleFiles(e) { const urls = await Promise.all([...(e.target.files || [])].slice(0, 3).map(fileToDataUrl)); set('screenshots', urls.filter(Boolean)); }
-    function submit(e) { e.preventDefault(); onSave({ ...form, pnl: form.exit ? pnlFor(form, form.exit) : 0 }); }
+    const dupTicket = !!(pf && pf.ticket && (account.trades || []).some(t => t.mt5Ticket === pf.ticket));
+    function changeTz(v) { mt5SetTz(v); setTzMode(v); setForm({ ...form, date: mt5ToWib(pf.rawOpen, v), closeDate: mt5ToWib(pf.rawClose, v) }); }
+    function submit(e) { e.preventDefault(); const extra = pf ? { mt5Ticket: pf.ticket || undefined, mt5Net: form.exit && pf.net != null ? pf.net : null, source: 'screenshot' } : {}; onSave({ ...form, ...extra, pnl: form.exit ? pnlFor(form, form.exit) : 0 }); }
+    const scanBox = pf && React.createElement("div", { className: "scan-result" },
+        React.createElement("strong", null, "Hasil baca screenshot (Beta)"),
+        React.createElement("small", null, "Periksa tiap kolom sebelum disimpan \u2014 pembacaan teks bisa keliru."),
+        pf.ticket && React.createElement("small", null, "Tiket MT5: #", pf.ticket),
+        !pf.symbolKnown && React.createElement("small", { className: "warn" }, "Simbol \"", pf.symbolRaw, "\" tidak ada di daftar, dipilih XAUUSD. Silakan ganti jika salah."),
+        !pf.hasOpen && React.createElement("small", { className: "warn" }, "Waktu buka tidak terbaca (baris detail posisi tidak ikut di screenshot). Tanggal di bawah memakai waktu tutup \u2014 sesuaikan. SL/TP juga perlu diisi manual."),
+        dupTicket && React.createElement("small", { className: "warn" }, "Peringatan: tiket ini sudah pernah dicatat di akun ini."),
+        React.createElement("label", null, "Zona waktu server MT5",
+            React.createElement("select", { value: tzMode, onChange: e => changeTz(e.target.value) }, MT5_TZ_OPTIONS.map(o => React.createElement("option", { key: o.v, value: o.v }, o.l)))),
+        React.createElement("small", null, "Waktu ditampilkan dalam WIB (UTC+7)."));
+    const closeBox = pf && form.exit !== '' && React.createElement("div", { className: "form-grid" },
+        React.createElement("label", null, "Exit price", React.createElement("input", { inputMode: "decimal", value: form.exit, onChange: e => set('exit', e.target.value) })),
+        React.createElement("label", null, "Waktu close (WIB)", React.createElement(DateField, { withTime: true, value: form.closeDate, onChange: v => set('closeDate', v) })),
+        React.createElement("label", null, "Biaya (swap + komisi)", React.createElement("input", { inputMode: "decimal", value: form.fees, onChange: e => set('fees', e.target.value) })),
+        React.createElement("label", null, "Profit MT5 (bersih)", React.createElement("input", { readOnly: true, value: pf.net == null ? '-' : pf.net.toFixed(2) })));
     const formEl = React.createElement("form", { onSubmit: submit },
+                scanBox,
                 React.createElement("div", { className: "form-grid" },
                     React.createElement("label", null,
                         "Symbol",
@@ -59,13 +79,14 @@ function AddTradeForm({ account, onClose, onSave, initial }) {
                     React.createElement("div", null,
                         React.createElement("span", null, "R:R"),
                         React.createElement("strong", null, risk ? (reward / risk).toFixed(2) : '—'))),
+                closeBox,
                 React.createElement("div", { className: "fs-actions" },
                     React.createElement("button", { type: "button", className: "secondary-btn", onClick: () => { setCalculated(true); setShowAdjust(true); } },
                         React.createElement(Target, { size: 15 }),
                         " Calculate / Adjust risk"),
                     React.createElement("button", { className: "primary-btn", type: "submit" },
                         React.createElement(Plus, { size: 17 }),
-                        " Save open trade")),
+                        pf && form.exit !== '' ? " Simpan trade (closed)" : " Save open trade")),
                 calculated && React.createElement("p", { className: "helper-note" },
                     React.createElement(ClipboardPaste, { size: 13 }),
                     " Kalkulasi tersimpan sebelum submit. ",
@@ -74,7 +95,7 @@ function AddTradeForm({ account, onClose, onSave, initial }) {
         React.createElement("div", { className: "modal wide-modal fs" },
             React.createElement("div", { className: "modal-head" },
                 React.createElement("div", null,
-                    React.createElement("p", { className: "eyebrow" }, initial ? 'EDIT TRADE / UPDATE' : 'NEW TRADE / MANUAL ENTRY'),
+                    React.createElement("p", { className: "eyebrow" }, initial ? 'EDIT TRADE / UPDATE' : pf ? 'NEW TRADE / SCREENSHOT ENTRY' : 'NEW TRADE / MANUAL ENTRY'),
                     React.createElement("h2", null, initial ? 'Edit trade' : 'Tambah trade')),
                 React.createElement("button", { className: "icon-btn", onClick: onClose },
                     React.createElement(X, { size: 19 }))),

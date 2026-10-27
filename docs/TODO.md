@@ -310,4 +310,13 @@
 - Perilaku aplikasi sama persis dengan v2.8.12 (CSS identik baris per baris; semua tes regresi lolos).
 - File sisa proyek lama dihapus: server.js, package.json, app.config.ts, manus-routes.json, UPDATE_v2.4.2.md, GITHUB_UPLOAD.md, icon-maskable-512.png.
 - Service worker memakai nama cache baru ("ej3-...") dan hanya membersihkan cache miliknya sendiri; daftar file precache mengikuti struktur baru.
-- Rencana berikutnya: v3.1.0 import riwayat trade MT5 (CSV/Excel dari portal broker).
+- Rencana berikutnya: import riwayat trade MT5 (CSV/Excel dari portal broker) bila sudah ada contoh berkasnya.
+
+## v3.1.0 — Screenshot Trade Entry (Beta)
+- Tombol + di My Journal sekarang membuka menu kecil: "Manual Trade Entry" dan "Screenshot Trade Entry (Beta)". Tombol "Add trade" di header dan bar bawah tetap langsung ke form manual.
+- Screenshot Trade Entry: pilih gambar dari galeri -> layar "Membaca data trade dari screenshot..." -> form Tambah trade terisi (symbol, arah, tanggal & waktu, entry, exit, lots, SL, TP, biaya) untuk diperiksa lalu disimpan.
+- Pembaca teks (OCR) memakai Tesseract.js dari jsDelivr, dimuat hanya saat fitur dipakai dan berjalan di HP (gambar tidak dikirim ke server). Pemakaian pertama perlu internet (unduhan beberapa MB), berikutnya biasanya lebih cepat karena disimpan browser.
+- Format yang dikenali: Riwayat posisi MT5 (Android/iOS), tampilan "GOLD, buy 0.04 ..." beserta baris harga. Jika posisi diketuk sehingga detail terbuka (tiket, waktu Buka, S/L, T/P, Swap, Komisi), semua kolom terisi lengkap; tanpa detail, waktu buka/SL/TP harus diisi manual.
+- Jam server MT5 diubah ke WIB. Pilihan zona waktu ada di form (default GMT+2/GMT+3 otomatis mengikuti jam musim panas AS) dan diingat di perangkat.
+- Profit memakai angka bersih dari MT5 (profit + swap + komisi). Nomor tiket disimpan (mt5Ticket) untuk peringatan jika tiket yang sama dicatat dua kali.
+- File baru: js/lib/mt5-parse.js, js/lib/ocr.js, js/components/screenshot-entry.js. File berubah: index.html, sw.js (cache ej3-3.1.0), js/app.js, js/pages/journal.js, js/components/trade-modals.js, js/lib/format.js, css/10-profile-add-trade.css.

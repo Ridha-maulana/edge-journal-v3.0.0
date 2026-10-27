@@ -1,4 +1,4 @@
-const C='ej3-3.0.0';   /* naikkan angka ini setiap rilis agar HP memuat versi baru */
+const C='ej3-3.1.0';   /* naikkan angka ini setiap rilis agar HP memuat versi baru */
 const SHELL=[
   './',
   './index.html',
@@ -24,6 +24,7 @@ const SHELL=[
   './js/watchdog.js',
   './js/components/account-modal.js',
   './js/components/calendar-modal.js',
+  './js/components/screenshot-entry.js',
   './js/components/charts.js',
   './js/components/error-boundary.js',
   './js/components/form-controls.js',
@@ -40,6 +41,8 @@ const SHELL=[
   './js/lib/icons.js',
   './js/lib/react-hooks.js',
   './js/lib/share-image.js',
+  './js/lib/mt5-parse.js',
+  './js/lib/ocr.js',
   './js/lib/store.js',
   './js/lib/trading.js',
   './js/pages/journal.js',
@@ -62,6 +65,7 @@ self.addEventListener('fetch',e=>{
   if(req.method!=='GET')return;
   const u=new URL(req.url);
   if(u.protocol!=='http:'&&u.protocol!=='https:')return;
+  if(/tesseract|projectnaptha/i.test(req.url))return; /* mesin OCR berukuran besar: biarkan browser/Tesseract menyimpannya sendiri */
   const same=u.origin===self.location.origin;
   e.respondWith(caches.open(C).then(async cache=>{
     const cached=await cache.match(req,{ignoreSearch:req.mode==='navigate'});

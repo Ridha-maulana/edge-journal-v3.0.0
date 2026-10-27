@@ -15,6 +15,8 @@ function App() {
     const [showAdd, setShowAdd] = useState(false);
     const [closingTrade, setClosingTrade] = useState(null);
     const [editingTrade, setEditingTrade] = useState(null);
+    const [prefill, setPrefill] = useState(null);
+    const [scan, setScan] = useState(null);
     const [expanded, setExpanded] = useState(null);
     const [journalFilters, setJournalFilters] = useState({ search: '', status: 'all', side: 'all', date: '' });
     window.__applyRemoteState = text => {
@@ -53,11 +55,19 @@ function App() {
     function recordCapital(data) { const amount = Number(data.amount) || 0; if (amount <= 0)
         return; const delta = data.type === 'withdraw' ? -amount : amount; const updated = accounts.map(a => a.id === activeAccountId ? { ...a, balance: Number(a.balance || 0) + delta, capitalHistory: [...(a.capitalHistory || []), { id: uid('capital'), type: data.type, amount, date: data.date, note: data.note || '' }] } : a); persist(updated); }
     function updateAccount(patch) { persist(accounts.map(a => a.id === activeAccountId ? { ...a, ...patch } : a)); }
-    function closePopups() { setShowAdd(false); setEditingTrade(null); setClosingTrade(null); setShowAccount(false); setAccountMode('manage'); document.querySelectorAll('[data-confirm]').forEach(n => n.dispatchEvent(new Event('confirm-cancel'))); }
+    function closePopups() { setShowAdd(false); setPrefill(null); setEditingTrade(null); setClosingTrade(null); setShowAccount(false); setAccountMode('manage'); document.querySelectorAll('[data-confirm]').forEach(n => n.dispatchEvent(new Event('confirm-cancel'))); }
     function goTab(t) { closePopups(); setNavHidden(false); if (t === 'performance' && tab === 'performance')
         window.dispatchEvent(new Event('perf-home')); setTab(t); window.scrollTo(0, 0); }
-    function openAdd() { setEditingTrade(null); setClosingTrade(null); setShowAdd(true); }
-    function addTrade(data) { const trade = { ...data, id: uid('trade'), entry: Number(data.entry), exit: data.exit ? Number(data.exit) : null, lots: Number(data.lots) || 0, sl: data.sl ? Number(data.sl) : null, tp: data.tp ? Number(data.tp) : null, fees: Number(data.fees) || 0, status: data.exit ? 'closed' : 'open', pnl: data.exit ? pnlFor(data, data.exit) : 0, review: data.review || '', screenshots: data.screenshots || [] }; persistTrades([trade, ...trades]); setShowAdd(false); setTab('journal'); }
+    function openAdd() { setEditingTrade(null); setClosingTrade(null); setPrefill(null); setShowAdd(true); }
+    async function scanScreenshot(file) { if (!file) return; setScan({ p: 0, t: 'Menyiapkan\u2026' }); try {
+        const text = await ocrImageFile(file, (p, t) => setScan({ p, t }));
+        const res = parseMt5Text(text);
+        setScan(null);
+        if (!res.pick) { notify('Data trade tidak terbaca. Coba screenshot yang lebih jelas (Riwayat MT5, ketuk posisinya agar detail terbuka) atau isi manual.'); return; }
+        setEditingTrade(null); setClosingTrade(null); setPrefill(buildPrefill(res.pick, mt5GetTz())); setShowAdd(true);
+    }
+    catch (e) { setScan(null); notify(e && e.message === 'ocr-load' ? 'Mesin pembaca teks gagal dimuat. Pastikan internet aktif lalu coba lagi.' : 'Screenshot gagal dibaca. Coba lagi atau isi manual.'); } }
+    function addTrade(data) { const trade = { ...data, id: uid('trade'), entry: Number(data.entry), exit: data.exit ? Number(data.exit) : null, lots: Number(data.lots) || 0, sl: data.sl ? Number(data.sl) : null, tp: data.tp ? Number(data.tp) : null, fees: Number(data.fees) || 0, status: data.exit ? 'closed' : 'open', pnl: data.exit ? (data.mt5Net != null ? data.mt5Net : pnlFor(data, data.exit)) : 0, review: data.review || '', screenshots: data.screenshots || [] }; delete trade.mt5Net; persistTrades([trade, ...trades]); setShowAdd(false); setPrefill(null); setTab('journal'); }
     function closeTrade(data) { const trade = trades.find(t => t.id === data.tradeId); if (!trade)
         return; const updated = { ...trade, exit: Number(data.exit), closeDate: data.closeDate, fees: Number(data.fees) || 0, exitMethod: data.exitMethod, status: 'closed', pnl: pnlFor({ ...trade, fees: Number(data.fees) || 0 }, Number(data.exit)), review: data.review || '' }; persistTrades(trades.map(t => t.id === trade.id ? updated : t)); setClosingTrade(null); setExpanded(trade.id); }
     function updateTrade(data) { const old = trades.find(t => t.id === data.id); if (!old)
@@ -108,7 +118,7 @@ function App() {
                     React.createElement("small", null, money(activeAccount.balance, activeAccount.currency)))),
             React.createElement("main", { className: "main-content" },
                 tab === 'performance' && React.createElement(Performance, { onSelectDate: chooseCalendarDate, onWallet: () => { setAccountMode('capital'); setShowAccount(true); }, account: activeAccount, trades: trades, period: period, setPeriod: setPeriod, customStart: customStart, customEnd: customEnd, setCustomStart: setCustomStart, setCustomEnd: setCustomEnd }),
-                tab === 'journal' && React.createElement(Journal, { account: activeAccount, trades: trades, filters: journalFilters, setFilters: setJournalFilters, expanded: expanded, setExpanded: setExpanded, onAdd: openAdd, onDelete: deleteTrade, onClose: setClosingTrade, onEdit: setEditingTrade }),
+                tab === 'journal' && React.createElement(Journal, { account: activeAccount, trades: trades, filters: journalFilters, setFilters: setJournalFilters, expanded: expanded, setExpanded: setExpanded, onAdd: openAdd, onScan: scanScreenshot, onDelete: deleteTrade, onClose: setClosingTrade, onEdit: setEditingTrade }),
                 tab === 'account' && React.createElement(AccountPage, { accounts: accounts, activeAccount: activeAccount, onSelect: selectAccount, onCreate: addAccount, onDelete: deleteAccount, onUpdate: updateAccount, onCapital: recordCapital, onExport: exportCsv, onBackup: backupJson, onRestore: restoreJson }),
                 tab === 'tools' && React.createElement(Tools, { account: activeAccount, trades: trades, onAdd: openAdd, onExport: exportCsv, onBackup: backupJson, onRestore: restoreJson, onNewAccount: () => setShowAccount(true) }))),
         React.createElement("nav", { className: navHidden ? "bottom-nav nav-hidden" : "bottom-nav" },
@@ -117,7 +127,8 @@ function App() {
             React.createElement("button", { type: "button", className: showAdd ? "nav-item nav-add active" : "nav-item nav-add", "aria-label": "Tambah posisi", onClick: openAdd }, React.createElement(CandlePlus, null), React.createElement("span", null, "Add trade")),
             React.createElement(NavItem, { active: tab === 'tools' && !showAdd, onClick: () => goTab('tools'), icon: React.createElement(SlidersHorizontal, null), label: "Tools" }),
             React.createElement(NavItem, { active: tab === 'account' && !showAdd, onClick: () => goTab('account'), icon: React.createElement(UserRound, null), label: "Profil" })),
-        showAdd && React.createElement(AddTradeModal, { account: activeAccount, onClose: () => setShowAdd(false), onSave: addTrade }),
+        showAdd && React.createElement(AddTradeModal, { account: activeAccount, prefill: prefill, onClose: () => { setShowAdd(false); setPrefill(null); }, onSave: addTrade }),
+        scan && React.createElement(ScanOverlay, { progress: scan.p, text: scan.t }),
         editingTrade && React.createElement(AddTradeModal, { initial: editingTrade, account: activeAccount, onClose: () => setEditingTrade(null), onSave: updateTrade }),
         closingTrade && React.createElement(CloseTradeModal, { trade: closingTrade, onClose: () => setClosingTrade(null), onSave: closeTrade }),
         showAccount && React.createElement(AccountModal, { initialMode: accountMode, accounts: accounts, activeAccount: activeAccount, onClose: () => { setShowAccount(false); setAccountMode('manage'); }, onSelect: selectAccount, onCreate: addAccount, onDelete: deleteAccount, onUpdate: updateAccount, onCapital: recordCapital, onBackup: backupJson, onRestore: restoreJson, onExport: exportCsv }),
