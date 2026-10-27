@@ -6,15 +6,25 @@
    pertama selalu diblokir dan baru jalan di sentuhan kedua. Perbaikan: jika belum ada aktivasi, getar
    ditunda ke pointerup (hanya sentuhan pertama, selisihnya hitungan milidetik). Tombol menu bawah
    bergetar tepat saat tab berpindah (event click), jadi selalu sinkron, termasuk di sentuhan pertama. */
+/* Aplikasi Android (Capacitor): WebView sering tidak menggetarkan lewat navigator.vibrate, jadi pakai plugin Haptics bawaan. */
+function nativeHaptics() {
+    try {
+        const c = window.Capacitor;
+        if (c && c.isNativePlatform && c.isNativePlatform())
+            return (c.Plugins && c.Plugins.Haptics) || (c.registerPlugin && c.registerPlugin('Haptics')) || null;
+    }
+    catch (e) { }
+    return null;
+}
 function setupHaptics() {
-    if (window.__hapticsReady || typeof navigator.vibrate !== 'function') return;
+    if (window.__hapticsReady || (typeof navigator.vibrate !== 'function' && !nativeHaptics())) return;
     window.__hapticsReady = true;
     const NAV_SEL = '.nav-item';
     const LIGHT_SEL = '.pill,.tsel,.dfield,.cal-cell,.pe-tabs button,.pe-years button,button[aria-label="Buka kalender"]';
     let pending = null;
     const isTouch = e => e.pointerType === 'touch' || e.pointerType === 'pen';
     const reduced = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-    const hasActivation = () => !navigator.userActivation || navigator.userActivation.hasBeenActive;
+    const hasActivation = () => !!nativeHaptics() || !navigator.userActivation || navigator.userActivation.hasBeenActive;
     const targetOf = e => (e.target && e.target.closest) ? e.target.closest('button,[role="button"]') : null;
     function patternFor(el) {
         const label = (el.textContent || '').trim().toLowerCase();
@@ -25,6 +35,15 @@ function setupHaptics() {
         return 8;
     }
     function fire(pattern) {
+        const nh = nativeHaptics();
+        if (nh) {
+            try {
+                let t = 0;
+                [].concat(pattern).forEach((d, i) => { if (i % 2 === 0) setTimeout(() => { try { const r = nh.vibrate({ duration: d }); if (r && r.catch) r.catch(() => { }); } catch (e) { } }, t); t += d; });
+                return true;
+            }
+            catch (err) { return false; }
+        }
         try { return navigator.vibrate(pattern); } catch (err) { return false; }
     }
     document.addEventListener('pointerdown', e => {
