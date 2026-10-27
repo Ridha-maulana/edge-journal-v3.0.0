@@ -1,0 +1,24 @@
+name: Unzip release
+on:
+  push:
+    paths:
+      - release.zip
+permissions:
+  contents: write
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unzip
+        run: |
+          unzip -o release.zip
+          rm release.zip
+          if [ -f HAPUS.txt ]; then xargs -r rm -rf < HAPUS.txt; rm HAPUS.txt; fi
+      - name: Commit
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          git commit -m "Update dari release.zip" || echo "tidak ada perubahan"
+          git push
