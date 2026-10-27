@@ -32,3 +32,16 @@
 .scan-result label{margin:6px 0 0!important}
 .scan-result label{font-size:10px!important;color:#9aa8c0}
 .scan-result select{font-size:12px!important;padding:9px 10px!important}
+/* v3.1.0 — daftar impor beberapa posisi */
+.import-row{width:100%;display:flex;gap:12px;align-items:flex-start;text-align:left;background:#0c1322;border:1px solid #26334e;border-radius:12px;padding:12px;margin:0 0 9px;color:#e6ecff}
+.import-row.on{border-color:#4d6fd8;background:#12204a}
+.import-check{width:22px;height:22px;border-radius:7px;border:1.5px solid #3a4b73;display:grid;place-items:center;flex:none;font-size:13px;color:#fff;margin-top:1px}
+.import-row.on .import-check{background:#4d6fd8;border-color:#4d6fd8}
+.import-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.import-body strong{font-size:13px;display:flex;gap:5px;align-items:baseline}
+.import-body strong em{font-style:normal;font-size:11px}
+.import-body strong b{margin-left:auto;font:500 13px 'DM Mono',monospace}
+.import-body small{font-size:10px;color:#8d9bbd;font-family:'DM Mono',monospace}
+.import-body small.warn{color:#f7af5c}
+.primary-btn:disabled{opacity:.45}
+.modal.fs .fs-actions.import-actions{position:sticky;bottom:0;background:#10182a;padding:10px 0 4px;margin-top:6px;z-index:2}

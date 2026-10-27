@@ -319,4 +319,5 @@
 - Format yang dikenali: Riwayat posisi MT5 (Android/iOS), tampilan "GOLD, buy 0.04 ..." beserta baris harga. Jika posisi diketuk sehingga detail terbuka (tiket, waktu Buka, S/L, T/P, Swap, Komisi), semua kolom terisi lengkap; tanpa detail, waktu buka/SL/TP harus diisi manual.
 - Jam server MT5 diubah ke WIB. Pilihan zona waktu ada di form (default GMT+2/GMT+3 otomatis mengikuti jam musim panas AS) dan diingat di perangkat.
 - Profit memakai angka bersih dari MT5 (profit + swap + komisi). Nomor tiket disimpan (mt5Ticket) untuk peringatan jika tiket yang sama dicatat dua kali.
+- v3.1.1: satu screenshot berisi beberapa posisi dibaca sekaligus. Muncul daftar posisi berinformasi lengkap (centang, bisa dimatikan) lalu "Simpan N trade" mencatat semuanya. Kartu yang belum diketuk (tanpa tiket/SL/TP) dilewati dan diberi tahu jumlahnya. Tiket yang sudah tercatat otomatis tidak dicentang.
 - File baru: js/lib/mt5-parse.js, js/lib/ocr.js, js/components/screenshot-entry.js. File berubah: index.html, sw.js (cache ej3-3.1.0), js/app.js, js/pages/journal.js, js/components/trade-modals.js, js/lib/format.js, css/10-profile-add-trade.css.

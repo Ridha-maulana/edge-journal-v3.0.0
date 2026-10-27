@@ -17,6 +17,7 @@ function App() {
     const [editingTrade, setEditingTrade] = useState(null);
     const [prefill, setPrefill] = useState(null);
     const [scan, setScan] = useState(null);
+    const [batch, setBatch] = useState(null);
     const [expanded, setExpanded] = useState(null);
     const [journalFilters, setJournalFilters] = useState({ search: '', status: 'all', side: 'all', date: '' });
     window.__applyRemoteState = text => {
@@ -55,7 +56,7 @@ function App() {
     function recordCapital(data) { const amount = Number(data.amount) || 0; if (amount <= 0)
         return; const delta = data.type === 'withdraw' ? -amount : amount; const updated = accounts.map(a => a.id === activeAccountId ? { ...a, balance: Number(a.balance || 0) + delta, capitalHistory: [...(a.capitalHistory || []), { id: uid('capital'), type: data.type, amount, date: data.date, note: data.note || '' }] } : a); persist(updated); }
     function updateAccount(patch) { persist(accounts.map(a => a.id === activeAccountId ? { ...a, ...patch } : a)); }
-    function closePopups() { setShowAdd(false); setPrefill(null); setEditingTrade(null); setClosingTrade(null); setShowAccount(false); setAccountMode('manage'); document.querySelectorAll('[data-confirm]').forEach(n => n.dispatchEvent(new Event('confirm-cancel'))); }
+    function closePopups() { setBatch(null); setShowAdd(false); setPrefill(null); setEditingTrade(null); setClosingTrade(null); setShowAccount(false); setAccountMode('manage'); document.querySelectorAll('[data-confirm]').forEach(n => n.dispatchEvent(new Event('confirm-cancel'))); }
     function goTab(t) { closePopups(); setNavHidden(false); if (t === 'performance' && tab === 'performance')
         window.dispatchEvent(new Event('perf-home')); setTab(t); window.scrollTo(0, 0); }
     function openAdd() { setEditingTrade(null); setClosingTrade(null); setPrefill(null); setShowAdd(true); }
@@ -64,10 +65,14 @@ function App() {
         const res = parseMt5Text(text);
         setScan(null);
         if (!res.pick) { notify('Data trade tidak terbaca. Coba screenshot yang lebih jelas (Riwayat MT5, ketuk posisinya agar detail terbuka) atau isi manual.'); return; }
-        setEditingTrade(null); setClosingTrade(null); setPrefill(buildPrefill(res.pick, mt5GetTz())); setShowAdd(true);
+        setEditingTrade(null); setClosingTrade(null);
+        const full = res.rows.filter(r => r.detailed);
+        if (full.length >= 2) { setBatch(res.rows); return; }
+        setPrefill(buildPrefill(res.pick, mt5GetTz())); setShowAdd(true);
     }
     catch (e) { setScan(null); notify(e && e.message === 'ocr-load' ? 'Mesin pembaca teks gagal dimuat. Pastikan internet aktif lalu coba lagi.' : 'Screenshot gagal dibaca. Coba lagi atau isi manual.'); } }
     function addTrade(data) { const trade = { ...data, id: uid('trade'), entry: Number(data.entry), exit: data.exit ? Number(data.exit) : null, lots: Number(data.lots) || 0, sl: data.sl ? Number(data.sl) : null, tp: data.tp ? Number(data.tp) : null, fees: Number(data.fees) || 0, status: data.exit ? 'closed' : 'open', pnl: data.exit ? (data.mt5Net != null ? data.mt5Net : pnlFor(data, data.exit)) : 0, review: data.review || '', screenshots: data.screenshots || [] }; delete trade.mt5Net; persistTrades([trade, ...trades]); setShowAdd(false); setPrefill(null); setTab('journal'); }
+    function addTrades(list) { const made = list.map(pf => { const t = { id: uid('trade'), symbol: pf.symbol, side: pf.side, date: pf.date, closeDate: pf.closeDate, entry: Number(pf.entry), exit: Number(pf.exit), lots: Number(pf.lots) || 0, sl: pf.sl == null ? null : Number(pf.sl), tp: pf.tp == null ? null : Number(pf.tp), fees: Number(pf.fees) || 0, status: 'closed', exitMethod: pf.exitMethod, setup: '', review: '', screenshots: [], mt5Ticket: pf.ticket, source: 'screenshot' }; t.pnl = pf.net != null ? pf.net : pnlFor(t, t.exit); return t; }); if (!made.length) return; persistTrades([...made, ...trades]); setBatch(null); setTab('journal'); notify(made.length + ' trade dicatat dari screenshot.'); }
     function closeTrade(data) { const trade = trades.find(t => t.id === data.tradeId); if (!trade)
         return; const updated = { ...trade, exit: Number(data.exit), closeDate: data.closeDate, fees: Number(data.fees) || 0, exitMethod: data.exitMethod, status: 'closed', pnl: pnlFor({ ...trade, fees: Number(data.fees) || 0 }, Number(data.exit)), review: data.review || '' }; persistTrades(trades.map(t => t.id === trade.id ? updated : t)); setClosingTrade(null); setExpanded(trade.id); }
     function updateTrade(data) { const old = trades.find(t => t.id === data.id); if (!old)
@@ -128,6 +133,7 @@ function App() {
             React.createElement(NavItem, { active: tab === 'tools' && !showAdd, onClick: () => goTab('tools'), icon: React.createElement(SlidersHorizontal, null), label: "Tools" }),
             React.createElement(NavItem, { active: tab === 'account' && !showAdd, onClick: () => goTab('account'), icon: React.createElement(UserRound, null), label: "Profil" })),
         showAdd && React.createElement(AddTradeModal, { account: activeAccount, prefill: prefill, onClose: () => { setShowAdd(false); setPrefill(null); }, onSave: addTrade }),
+        batch && React.createElement(ImportListModal, { account: activeAccount, rows: batch, onClose: () => setBatch(null), onSave: addTrades }),
         scan && React.createElement(ScanOverlay, { progress: scan.p, text: scan.t }),
         editingTrade && React.createElement(AddTradeModal, { initial: editingTrade, account: activeAccount, onClose: () => setEditingTrade(null), onSave: updateTrade }),
         closingTrade && React.createElement(CloseTradeModal, { trade: closingTrade, onClose: () => setClosingTrade(null), onSave: closeTrade }),
