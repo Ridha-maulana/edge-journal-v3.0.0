@@ -45,3 +45,4 @@
 .import-body small.warn{color:#f7af5c}
 .primary-btn:disabled{opacity:.45}
 .modal.fs .fs-actions.import-actions{position:sticky;bottom:0;background:#10182a;padding:10px 0 4px;margin-top:6px;z-index:2}
+.add-menu-sub{display:block;font-size:10px;color:#8d9bbd;margin-top:2px}

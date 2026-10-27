@@ -9,7 +9,7 @@ function AddMenu({ onManual, onScreenshot, onClose }) {
                 React.createElement("span", null, "Manual Trade Entry")),
             React.createElement("button", { type: "button", className: "add-menu-item", role: "menuitem", onClick: onScreenshot },
                 React.createElement("span", { className: "add-menu-ico" }, React.createElement(Camera, { size: 17 })),
-                React.createElement("span", null, "Screenshot Trade Entry ", React.createElement("em", { className: "beta-tag" }, "Beta")))));
+                React.createElement("span", null, "Screenshot Trade Entry ", React.createElement("em", { className: "beta-tag" }, "Beta"), React.createElement("small", { className: "add-menu-sub" }, "Bisa pilih banyak gambar")))));
 }
 function ScanOverlay({ progress, text }) {
     const pct = Math.max(0, Math.min(100, Math.round((progress || 0) * 100)));

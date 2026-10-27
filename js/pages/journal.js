@@ -61,7 +61,7 @@ function Journal({ account, trades, filters, setFilters, expanded, setExpanded, 
             React.createElement("strong", null, "Tidak ada trade yang cocok"),
             React.createElement("span", null, "Ubah filter atau tambah transaksi baru.")),
         addMenu && React.createElement(AddMenu, { onClose: () => setAddMenu(false), onManual: () => { setAddMenu(false); onAdd(); }, onScreenshot: () => { setAddMenu(false); if (fileRef.current) { fileRef.current.value = ''; fileRef.current.click(); } } }),
-        React.createElement("input", { ref: fileRef, type: "file", accept: "image/*", style: { display: 'none' }, onChange: e => { const f = e.target.files && e.target.files[0]; if (f && onScan) onScan(f); } }),
+        React.createElement("input", { ref: fileRef, type: "file", accept: "image/*", multiple: true, style: { display: 'none' }, onChange: e => { const f = e.target.files ? [...e.target.files] : []; if (f.length && onScan) onScan(f); } }),
         React.createElement("button", { className: addMenu ? "fab open" : "fab", "aria-label": "Tambah trade", "aria-expanded": addMenu, onClick: () => setAddMenu(!addMenu) },
             React.createElement(Plus, { size: 25 })));
 }

@@ -57,24 +57,36 @@ function prepareOcrCanvas(file) {
         img.src = url;
     });
 }
-/* onProgress(0..1, teks tahap) */
-async function ocrImageFile(file, onProgress) {
+/* Banyak gambar sekaligus: mesin dimuat sekali, gambar dibaca satu per satu. onProgress(0..1, teks) -> array teks per gambar */
+async function ocrImageFiles(files, onProgress) {
+    const list = [...files], total = list.length, texts = [];
+    let cur = 0;
     const report = (p, t) => { try {
-        onProgress && onProgress(p, t);
+        onProgress && onProgress(Math.min(0.99, (cur + p) / total), (total > 1 ? 'Gambar ' + Math.min(cur + 1, total) + ' dari ' + total + ' \u00B7 ' : '') + t);
     }
     catch (e) { } };
-    report(0.02, 'Menyiapkan gambar…');
-    const canvas = await prepareOcrCanvas(file);
-    report(0.06, 'Memuat mesin pembaca teks…');
+    report(0.02, 'Menyiapkan gambar\u2026');
     const T = await loadTesseract();
+    report(0.06, 'Memuat mesin pembaca teks\u2026');
     const worker = await T.createWorker('eng', 1, { logger: m => { if (m && m.status === 'recognizing text')
-            report(0.3 + 0.7 * (m.progress || 0), 'Membaca teks…');
+            report(0.3 + 0.7 * (m.progress || 0), 'Membaca teks\u2026');
         else if (m && /load|init/i.test(m.status || ''))
-            report(0.1 + 0.2 * (m.progress || 0), 'Memuat data bahasa…'); } });
+            report(0.1 + 0.2 * (m.progress || 0), 'Memuat data bahasa\u2026'); } });
     try {
         await worker.setParameters({ tessedit_pageseg_mode: '6', preserve_interword_spaces: '1' });
-        const { data } = await worker.recognize(canvas);
-        return data.text || '';
+        for (cur = 0; cur < total; cur++) {
+            report(0.1, 'Menyiapkan gambar\u2026');
+            try {
+                const canvas = await prepareOcrCanvas(list[cur]);
+                const { data } = await worker.recognize(canvas);
+                texts.push(data.text || '');
+                canvas.width = canvas.height = 1; // lepaskan memori gambar
+            }
+            catch (e) {
+                texts.push('');
+            }
+        }
+        return texts;
     }
     finally {
         try {

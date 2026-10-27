@@ -60,15 +60,19 @@ function App() {
     function goTab(t) { closePopups(); setNavHidden(false); if (t === 'performance' && tab === 'performance')
         window.dispatchEvent(new Event('perf-home')); setTab(t); window.scrollTo(0, 0); }
     function openAdd() { setEditingTrade(null); setClosingTrade(null); setPrefill(null); setShowAdd(true); }
-    async function scanScreenshot(file) { if (!file) return; setScan({ p: 0, t: 'Menyiapkan\u2026' }); try {
-        const text = await ocrImageFile(file, (p, t) => setScan({ p, t }));
-        const res = parseMt5Text(text);
+    async function scanScreenshot(files) { files = [].concat(files || []).filter(Boolean); if (!files.length) return; setScan({ p: 0, t: 'Menyiapkan\u2026' }); try {
+        const texts = await ocrImageFiles(files, (p, t) => setScan({ p, t }));
+        // gabungkan semua gambar; posisi dengan tiket sama (screenshot tumpang tindih) hanya dihitung sekali
+        const seen = new Set(), rows = [];
+        for (const tx of texts) for (const r of parseMt5Text(tx).rows) { const key = r.ticket ? 't' + r.ticket : [r.side, r.lots, r.entry, r.exit, r.closeTime].join('|'); if (seen.has(key)) continue; seen.add(key); rows.push(r); }
+        rows.sort((x, y) => String(y.closeTime).localeCompare(String(x.closeTime)));
+        const pick = rows.find(r => r.detailed) || rows[0] || null;
         setScan(null);
-        if (!res.pick) { notify('Data trade tidak terbaca. Coba screenshot yang lebih jelas (Riwayat MT5, ketuk posisinya agar detail terbuka) atau isi manual.'); return; }
+        if (!pick) { notify('Data trade tidak terbaca. Coba screenshot yang lebih jelas (Riwayat MT5, ketuk posisinya agar detail terbuka) atau isi manual.'); return; }
         setEditingTrade(null); setClosingTrade(null);
-        const full = res.rows.filter(r => r.detailed);
-        if (full.length >= 2) { setBatch(res.rows); return; }
-        setPrefill(buildPrefill(res.pick, mt5GetTz())); setShowAdd(true);
+        const full = rows.filter(r => r.detailed);
+        if (full.length >= 2) { setBatch(rows); return; }
+        setPrefill(buildPrefill(pick, mt5GetTz())); setShowAdd(true);
     }
     catch (e) { setScan(null); notify(e && e.message === 'ocr-load' ? 'Mesin pembaca teks gagal dimuat. Pastikan internet aktif lalu coba lagi.' : 'Screenshot gagal dibaca. Coba lagi atau isi manual.'); } }
     function addTrade(data) { const trade = { ...data, id: uid('trade'), entry: Number(data.entry), exit: data.exit ? Number(data.exit) : null, lots: Number(data.lots) || 0, sl: data.sl ? Number(data.sl) : null, tp: data.tp ? Number(data.tp) : null, fees: Number(data.fees) || 0, status: data.exit ? 'closed' : 'open', pnl: data.exit ? (data.mt5Net != null ? data.mt5Net : pnlFor(data, data.exit)) : 0, review: data.review || '', screenshots: data.screenshots || [] }; delete trade.mt5Net; persistTrades([trade, ...trades]); setShowAdd(false); setPrefill(null); setTab('journal'); }
