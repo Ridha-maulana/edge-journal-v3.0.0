@@ -15,6 +15,20 @@ async function saveFile(filename, text, mime) {
         notify('Gagal menyimpan file: ' + ((e === null || e === void 0 ? void 0 : e.message) || e));
         return;
     }
+    // Aplikasi Android (Capacitor): unduhan blob tidak jalan di WebView, simpan lewat plugin lalu buka menu bagikan/simpan
+    try {
+        const cap = window.Capacitor;
+        if (cap && cap.isNativePlatform && cap.isNativePlatform() && cap.Plugins && cap.Plugins.Filesystem && cap.Plugins.Share) {
+            const w = await cap.Plugins.Filesystem.writeFile({ path: filename, data: text, directory: 'CACHE', encoding: 'utf8' });
+            await cap.Plugins.Share.share({ title: filename, url: w.uri, dialogTitle: 'Simpan atau bagikan file' });
+            return;
+        }
+    }
+    catch (e) {
+        if (!/cancel/i.test(String((e && e.message) || e)))
+            notify('Gagal menyimpan file: ' + ((e && e.message) || e));
+        return;
+    }
     const blob = new Blob([text], { type: mime });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
