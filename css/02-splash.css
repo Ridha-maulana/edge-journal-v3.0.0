@@ -15,7 +15,10 @@ html,body{background:#090d18}
 #splash .sp-status{position:absolute;left:0;right:0;bottom:14%;padding:0 24px;text-align:center;color:#8590a8;font:13px/1.5 system-ui,sans-serif}
 #splash .sp-status:empty{display:none}
 @keyframes spMark{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
-@keyframes spMorph{0%{opacity:0;transform:translate(var(--sx,0px),var(--sy,0px)) scale(var(--ss,1))}12%{opacity:1;transform:translate(var(--sx,0px),var(--sy,0px)) scale(var(--ss,1))}100%{opacity:1;transform:none}}
+@keyframes spMorph{0%{opacity:0;border-radius:50%;transform:translate(var(--sx,0px),var(--sy,0px)) scale(var(--ss,1))}12%{opacity:1;border-radius:50%;transform:translate(var(--sx,0px),var(--sy,0px)) scale(var(--ss,1))}100%{opacity:1;border-radius:28%;transform:none}}
+@keyframes spMorphA{0%,12%{opacity:1;border-radius:50%;transform:translate(var(--sx,0px),var(--sy,0px)) scale(var(--ss,1))}100%{opacity:1;border-radius:28%;transform:none}}
+/* dibuka sebagai aplikasi terpasang: logo sudah terlihat di splash Android, jadi langsung tampil tanpa fade-in */
+#splash.sp-android.sp-morph .sp-mark{animation-name:spMorphA!important}
 @keyframes spText{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
 @keyframes spGlow{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
 

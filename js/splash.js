@@ -3,8 +3,9 @@
 window.__splashStart=(window.performance&&performance.now)?performance.now():0;
 window.__splashMin=1350;
 (function(){var m=document.querySelector('#splash .sp-mark');if(m)m.addEventListener('animationstart',function(){if(window.__splashAnimStart==null)window.__splashAnimStart=performance.now();},{once:true});})();
-/* Splash Android sekarang kosong (ikon maskable = warna latar), jadi animasi langsung muncul dari tengah layar:
-   logo besar tampil sebentar, lalu menyusut ke kiri sambil tulisan muncul. Tidak ada pergeseran vertikal. */
+/* Splash Android menampilkan logo bulat (ikon maskable v5). Saat dibuka sebagai aplikasi terpasang, animasi halaman mulai dari
+   logo yang sama di tengah layar (tanpa fade-in) lalu menyusut jadi kotak membulat ke kiri sambil tulisan muncul.
+   Di tab browser biasa (tanpa splash Android) logo memudar masuk seperti sebelumnya. */
 (function(){
   try{
     var sp=document.getElementById('splash'),mk=sp&&sp.querySelector('.sp-mark');
@@ -12,10 +13,11 @@ window.__splashMin=1350;
     var W=innerWidth;
     var lk=mk.offsetParent.getBoundingClientRect(),w=mk.offsetWidth; if(!w)return;   /* ukuran layout, tidak terpengaruh transform */
     var mx=lk.left+mk.offsetLeft+w/2;
-    var size=Math.min(W*0.3345,w*2.4);    /* logo awal besar di tengah */
+    var size=Math.min(W*0.3875,w*2.4);    /* logo awal besar di tengah (bulat, sama dengan ikon splash Android) */
     sp.style.setProperty('--ss',(size/w).toFixed(4));
     sp.style.setProperty('--sx',(W/2-mx).toFixed(1)+'px');
     sp.style.setProperty('--sy','0px');
+    try{if((window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone)sp.classList.add('sp-android');}catch(e){}
     sp.classList.add('sp-morph');
   }catch(e){}
 })();
