@@ -1,6 +1,6 @@
-# Edge Journal v3.1.1
+# Edge Journal v3.2.0
 
-Jurnal trading pribadi (PWA) — React 18, tanpa build tool, jalan langsung di GitHub Pages.
+Jurnal trading pribadi (PWA) — React 19, tanpa build tool, jalan langsung di GitHub Pages.
 Data tersimpan lokal (localStorage) dan bisa disinkronkan online lewat Firebase (Auth + Firestore).
 
 ## Struktur folder
@@ -13,6 +13,7 @@ assets/               ikon dan gambar login
 css/                  gaya, dimuat berurutan 01 → 10 (aturan belakangan menimpa yang depan)
 js/
   splash.js           layar pembuka
+  vendor/             React + ReactDOM 19 (satu berkas lokal, tanpa CDN)
   lib/                helper: format, perhitungan trading, penyimpanan, ikon, notifikasi, pembaca screenshot MT5 (mt5-parse, ocr)
   components/         komponen bersama: form, grafik, popup tambah/edit trade, Account management, kalender
   stats/              Advanced Statistics, Drill-down, Performa per bulan / Trader DNA

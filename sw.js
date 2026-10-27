@@ -1,4 +1,4 @@
-const C='ej3-3.1.1';   /* naikkan angka ini setiap rilis agar HP memuat versi baru */
+const C='ej3-3.2.0';   /* naikkan angka ini setiap rilis agar HP memuat versi baru */
 const SHELL=[
   './',
   './index.html',
@@ -33,6 +33,7 @@ const SHELL=[
   './js/firebase/cloud-sync.js',
   './js/firebase/cloud-ui.js',
   './js/firebase/firebase-config.js',
+  './js/vendor/react-19.2.8.min.js',
   './js/lib/errors.js',
   './js/lib/feedback.js',
   './js/lib/files.js',
@@ -53,7 +54,7 @@ const SHELL=[
   './js/stats/drilldown.js',
   './js/stats/perf-extra.js'
 ];
-const CDN=['https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js','https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js'];
+const CDN=[]; /* React kini lokal (js/vendor), tidak ada lagi berkas CDN wajib */
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>Promise.all([
   ...SHELL.map(u=>fetch(new Request(u,{cache:'reload'})).then(r=>{if(r&&r.ok)return c.put(u,r)}).catch(()=>{})),
   ...CDN.map(u=>fetch(new Request(u,{mode:'no-cors'})).then(r=>c.put(u,r)).catch(()=>{}))])));});
