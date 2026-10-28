@@ -13,11 +13,16 @@ window.__splashMin=1350;
     var W=innerWidth;
     var lk=mk.offsetParent.getBoundingClientRect(),w=mk.offsetWidth; if(!w)return;   /* ukuran layout, tidak terpengaruh transform */
     var mx=lk.left+mk.offsetLeft+w/2;
-    var size=Math.min(W*0.488,520);    /* logo awal = lingkaran splash Android hasil ukur video (48,8% lebar layar, tepat di tengah) */
+    var size=Math.min(W*0.4722,520);    /* logo awal = lingkaran splash Android hasil ukur video (47,2% lebar layar, tepat di tengah LAYAR) */
+    var native=false; try{native=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());}catch(e){}
+    var standalone=false; try{standalone=!!((window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone);}catch(e){}
+    /* Splash Android berpusat di tengah layar penuh, sedangkan halaman web berada di bawah bilah status.
+       Geser titik awal animasi supaya lingkaran tidak melompat turun (bilah bawah dianggap rata dengan layar). */
+    var sy=0; if(native||standalone){var d=(innerHeight-screen.height)/2; if(d<0&&d>-90)sy=d;}
     sp.style.setProperty('--ss',(size/w).toFixed(4));
     sp.style.setProperty('--sx',(W/2-mx).toFixed(1)+'px');
-    sp.style.setProperty('--sy','0px');
-    try{if((window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone)sp.classList.add('sp-android');}catch(e){}
+    sp.style.setProperty('--sy',sy.toFixed(1)+'px');
+    if(native||standalone)sp.classList.add('sp-android');
     sp.classList.add('sp-morph');
   }catch(e){}
 })();
