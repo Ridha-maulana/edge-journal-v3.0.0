@@ -1,11 +1,11 @@
-const C='ej3-3.3.2';   /* naikkan angka ini setiap rilis agar HP memuat versi baru */
+const C='ej3-3.3.3';   /* naikkan angka ini setiap rilis agar HP memuat versi baru */
 const SHELL=[
   './',
   './index.html',
   './manifest.webmanifest',
   './assets/icon-192.png',
   './assets/icon-512.png',
-  './assets/icon-maskable-v5-512.png',
+  './assets/icon-maskable-v6-512.png',
   './assets/login-art.webp',
   './css/01-base.css',
   './css/02-splash.css',
