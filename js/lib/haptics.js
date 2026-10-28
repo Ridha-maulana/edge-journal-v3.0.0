@@ -16,6 +16,37 @@ function nativeHaptics() {
     catch (e) { }
     return null;
 }
+window.__hapticStatus = { mode: nativeHaptics() ? 'native' : 'web', err: '', ok: 0 };
+function hapticFire(pattern) {
+    const nh = nativeHaptics();
+    if (nh && !window.__hapticNativeBroken) {
+        try {
+            let t = 0;
+            [].concat(pattern).forEach((d, i) => {
+                if (i % 2 === 0) setTimeout(() => {
+                    try {
+                        const r = nh.vibrate({ duration: Math.max(d, 20) });
+                        if (r && r.then) r.then(() => { window.__hapticStatus.ok++; }).catch(e => { window.__hapticStatus.err = String((e && (e.message || e.code)) || e); window.__hapticNativeBroken = true; try { navigator.vibrate && navigator.vibrate(pattern); } catch (x) { } });
+                    }
+                    catch (e) { window.__hapticStatus.err = String((e && e.message) || e); window.__hapticNativeBroken = true; }
+                }, t);
+                t += d;
+            });
+            return true;
+        }
+        catch (err) { window.__hapticStatus.err = String((err && err.message) || err); window.__hapticNativeBroken = true; }
+    }
+    try { return navigator.vibrate ? navigator.vibrate(pattern) : false; } catch (err) { return false; }
+}
+/* Tombol "Tes getar" di Profil: getar 80 ms lalu laporkan jalur yang dipakai */
+function hapticTest() {
+    window.__hapticNativeBroken = false; window.__hapticStatus.err = ''; window.__hapticStatus.ok = 0;
+    hapticFire(80);
+    return new Promise(res => setTimeout(() => {
+        const st = window.__hapticStatus;
+        res(nativeHaptics() ? (st.err ? 'Getar GAGAL di aplikasi Android: ' + st.err : (st.ok ? 'Perintah getar diterima aplikasi Android (OK)' : 'Perintah getar terkirim, belum ada balasan')) : 'Mode web: memakai navigator.vibrate (' + (navigator.vibrate ? 'tersedia' : 'tidak tersedia') + ')');
+    }, 700));
+}
 function setupHaptics() {
     if (window.__hapticsReady || (typeof navigator.vibrate !== 'function' && !nativeHaptics())) return;
     window.__hapticsReady = true;
@@ -34,18 +65,7 @@ function setupHaptics() {
         if (el.matches(NAV_SEL + ',' + LIGHT_SEL)) return 10;
         return 8;
     }
-    function fire(pattern) {
-        const nh = nativeHaptics();
-        if (nh) {
-            try {
-                let t = 0;
-                [].concat(pattern).forEach((d, i) => { if (i % 2 === 0) setTimeout(() => { try { const r = nh.vibrate({ duration: d }); if (r && r.catch) r.catch(() => { }); } catch (e) { } }, t); t += d; });
-                return true;
-            }
-            catch (err) { return false; }
-        }
-        try { return navigator.vibrate(pattern); } catch (err) { return false; }
-    }
+    function fire(pattern) { return hapticFire(pattern); }
     document.addEventListener('pointerdown', e => {
         pending = null;
         const el = targetOf(e);

@@ -34,5 +34,7 @@ function AccountPage({ accounts, activeAccount, onSelect, onCreate, onDelete, on
             React.createElement("button", { className: "secondary-btn", onClick: onExport },
                 React.createElement(Download, { size: 16 }),
                 " Share CSV")),
+            React.createElement("button", { className: "secondary-btn", type: "button", onClick: () => hapticTest().then(msg => notify(msg)) },
+                " Tes getar"),
             React.createElement("p", { className: "sync-note" }, "Edge Journal v" + APP_VERSION + " \u00B7 React " + React.version + " \u00B7 data tersimpan lokal di perangkat ini")));
 }
