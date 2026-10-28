@@ -88,14 +88,14 @@ function Performance({ onSelectDate, onWallet, account, trades, period, setPerio
                     fmtLong(customEnd))),
             React.createElement("button", { onClick: () => setPeriod('All time') }, "Semua waktu")));
     useEffect(() => { if (!shareOpen)
-        return; let dead = false, url = null; (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(() => { if (dead)
+        return; let dead = false, url = null; Promise.race([document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve(), new Promise(r => setTimeout(r, 800))]).then(() => { if (dead)
         return; const cvn = drawShareImage({ account: account.name, total, growthPct, start: startBal, now: account.balance + total, days: activeDays, vals: cv, labels: cLabels, best: bestTxt, dd: ddTxt, periodText: periodTxt, hide: shareHide, fmt: v => money(v, account.currency) }); cvn.toBlob(b => { if (dead || !b)
         return; shareBlob.current = b; url = URL.createObjectURL(b); setShareUrl(url); }, 'image/png'); }); return () => { dead = true; if (url)
         URL.revokeObjectURL(url); }; }, [shareOpen, shareHide, total, growthPct, period, customStart, customEnd, account.name, cn, cr]);
     const saveShare = () => { if (!shareUrl)
-        return; const a = document.createElement('a'); a.href = shareUrl; a.download = `edge-journal-${dateOnly(isoNow())}.png`; document.body.appendChild(a); a.click(); a.remove(); notify('Gambar disimpan. Buka WhatsApp atau Instagram lalu pilih dari galeri.'); };
+        return; if (capNative() && shareBlob.current) { nativeShareBlob(shareBlob.current, `edge-journal-${dateOnly(isoNow())}.png`, 'Simpan atau bagikan gambar').catch(e => { if (!/cancel/i.test(String((e && e.message) || e))) notify('Gagal membuka menu bagikan: ' + ((e && e.message) || e)); }); return; } const a = document.createElement('a'); a.href = shareUrl; a.download = `edge-journal-${dateOnly(isoNow())}.png`; document.body.appendChild(a); a.click(); a.remove(); notify('Gambar disimpan. Buka WhatsApp atau Instagram lalu pilih dari galeri.'); };
     const doShare = async () => { const b = shareBlob.current; if (!b)
-        return; const f = new File([b], 'edge-journal.png', { type: 'image/png' }); try {
+        return; const f = new File([b], 'edge-journal.png', { type: 'image/png' }); if (capNative()) { try { await nativeShareBlob(b, 'edge-journal.png', 'Bagikan ke story'); } catch (e) { if (!/cancel/i.test(String((e && e.message) || e))) notify('Gagal membuka menu bagikan: ' + ((e && e.message) || e)); } return; } try {
         if (navigator.canShare && navigator.canShare({ files: [f] })) {
             await navigator.share({ files: [f], title: 'Edge Journal', text: 'Hasil trading saya' });
             return;

@@ -38,5 +38,14 @@ async function saveFile(filename, text, mime) {
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+/* Aplikasi Android (Capacitor): plugin native dipanggil lewat registerPlugin (halaman dimuat dari alamat jarak jauh) */
+function capNative() { try { const c = window.Capacitor; return (c && c.isNativePlatform && c.isNativePlatform()) ? c : null; } catch (e) { return null; } }
+function capPlugin(name) { const c = capNative(); return c ? ((c.Plugins && c.Plugins[name]) || c.registerPlugin(name)) : null; }
+/* simpan blob ke cache aplikasi lalu buka menu bagikan Android (WhatsApp, Instagram, Drive, dst.) */
+async function nativeShareBlob(blob, filename, title) {
+    const b64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1] || ''); r.onerror = () => rej(r.error); r.readAsDataURL(blob); });
+    const w = await capPlugin('Filesystem').writeFile({ path: filename, data: b64, directory: 'CACHE' });
+    await capPlugin('Share').share({ title: title || filename, url: w.uri, dialogTitle: title || 'Bagikan gambar' });
+}
 function fileToDataUrl(file) { return new Promise(resolve => { if (!file)
     return resolve(null); const reader = new FileReader(); reader.onload = () => { const img = new Image(); img.onload = () => { const scale = Math.min(1, 900 / img.width); const canvas = document.createElement('canvas'); canvas.width = img.width * scale; canvas.height = img.height * scale; canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height); resolve(canvas.toDataURL('image/jpeg', .72)); }; img.src = reader.result; }; reader.readAsDataURL(file); }); }

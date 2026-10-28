@@ -13,7 +13,7 @@ window.__splashMin=1350;
     var W=innerWidth;
     var lk=mk.offsetParent.getBoundingClientRect(),w=mk.offsetWidth; if(!w)return;   /* ukuran layout, tidak terpengaruh transform */
     var mx=lk.left+mk.offsetLeft+w/2;
-    var size=Math.min(W*0.3875,w*2.4);    /* logo awal besar di tengah (bulat, sama dengan ikon splash Android) */
+    var size=Math.min(W*0.4711,520);    /* logo awal = ukuran logo splash Android hasil ukur video (47,11% lebar layar, tepat di tengah) */
     sp.style.setProperty('--ss',(size/w).toFixed(4));
     sp.style.setProperty('--sx',(W/2-mx).toFixed(1)+'px');
     sp.style.setProperty('--sy','0px');
