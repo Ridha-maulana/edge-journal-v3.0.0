@@ -25,7 +25,7 @@ function hapticFire(pattern) {
             [].concat(pattern).forEach((d, i) => {
                 if (i % 2 === 0) setTimeout(() => {
                     try {
-                        const r = nh.vibrate({ duration: Math.max(d, 20) });
+                        const r = nh.vibrate({ duration: d });
                         if (r && r.then) r.then(() => { window.__hapticStatus.ok++; }).catch(e => { window.__hapticStatus.err = String((e && (e.message || e.code)) || e); window.__hapticNativeBroken = true; try { navigator.vibrate && navigator.vibrate(pattern); } catch (x) { } });
                     }
                     catch (e) { window.__hapticStatus.err = String((e && e.message) || e); window.__hapticNativeBroken = true; }

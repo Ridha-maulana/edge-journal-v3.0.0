@@ -327,4 +327,5 @@
 - v3.2.4: export CSV/backup juga jalan di aplikasi Android (Capacitor) lewat Filesystem + Share; di browser tetap unduhan biasa.
 - v3.2.5: getar tombol/menu di aplikasi Android (Capacitor) memakai plugin Haptics; plugin Filesystem/Share dipanggil lewat registerPlugin (mode alamat jarak jauh). Di browser tetap navigator.vibrate.
 - v3.2.6: tombol "Tes getar" di Profil (melaporkan jalur getar yang dipakai dan pesan error plugin). Getar di aplikasi Android: jika plugin gagal otomatis kembali ke navigator.vibrate; durasi minimum 20 ms untuk motor getar linear.
+- v3.2.7: getar di aplikasi Android memakai durasi yang sama dengan versi web (tanpa minimum 20 ms) agar selembut di web.
 - File baru: js/lib/mt5-parse.js, js/lib/ocr.js, js/components/screenshot-entry.js. File berubah: index.html, sw.js (cache ej3-3.1.0), js/app.js, js/pages/journal.js, js/components/trade-modals.js, js/lib/format.js, css/10-profile-add-trade.css.
